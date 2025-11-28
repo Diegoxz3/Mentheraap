@@ -12,7 +12,7 @@ Y_todo esto usando DataStore, la tecnología moderna de Android para guardar dat
  */
 
 
-package com.example.mentherap.data
+package com.example.mentheraap.data
 
 import android.content.Context
 import androidx.datastore.core.DataStore

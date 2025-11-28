@@ -1,4 +1,4 @@
-package com.example.mentherap.data
+package com.example.mentheraap.data
 
 /**
  * Representa un usuario de la app Mentheraap

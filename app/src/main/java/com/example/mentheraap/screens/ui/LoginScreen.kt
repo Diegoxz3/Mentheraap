@@ -1,4 +1,4 @@
-package com.example.mentherap.screens.ui
+package com.example.mentheraap.screens.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*

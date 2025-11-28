@@ -9,7 +9,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import com.example.mentherap.data.User
+import com.example.mentheraap.data.User
+import com.example.mentherap.screens.ui.AppNavigation
+import com.example.mentherap.screens.ui.Screen
 import com.example.mentherap.ui.theme.MentherapTheme
 
 class MainActivity : ComponentActivity() {

@@ -1,4 +1,4 @@
-package com.example.mentherap.screens.ui
+package com.example.mentheraap.screens.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -18,7 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import com.example.mentherap.data.Avatars
+import com.example.mentheraap.data.Avatars
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

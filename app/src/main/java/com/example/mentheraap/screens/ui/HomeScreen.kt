@@ -1,6 +1,7 @@
-package com.example.mentherap.screens.ui
+package com.example.mentheraap.screens.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -18,14 +19,15 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.example.mentherap.data.Avatars
-import com.example.mentherap.data.User
+import com.example.mentheraap.data.Avatars
+import com.example.mentheraap.data.User
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     user: User,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    onNavigateToBreathing: () -> Unit
 ) {
     var showLogoutDialog by remember { mutableStateOf(false) }
 
@@ -176,7 +178,9 @@ fun HomeScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Card(
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable { onNavigateToBreathing() },
                         colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
                         )
