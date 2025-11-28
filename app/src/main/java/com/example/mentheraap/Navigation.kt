@@ -1,4 +1,4 @@
-package com.example.mentherap.screens.ui
+package com.example.mentheraap
 
 import androidx.compose.runtime.*
 import androidx.navigation.NavType
@@ -11,6 +11,8 @@ import com.example.mentheraap.screens.ui.BreathingExerciseScreen
 import com.example.mentheraap.screens.ui.BreathingExercisesScreen
 import com.example.mentheraap.screens.ui.HomeScreen
 import com.example.mentheraap.screens.ui.LoginScreen
+import com.example.mentheraap.screens.ui.MeditationScreen
+import com.example.mentheraap.screens.ui.MeditationsScreen
 import com.example.mentheraap.screens.ui.RegisterScreen
 
 sealed class Screen(val route: String) {
@@ -20,6 +22,10 @@ sealed class Screen(val route: String) {
     data object BreathingExercises : Screen("breathing_exercises")
     data object BreathingExercise : Screen("breathing_exercise/{exerciseId}") {
         fun createRoute(exerciseId: String) = "breathing_exercise/$exerciseId"
+    }
+    data object Meditations : Screen("meditations")
+    data object Meditation : Screen("meditation/{meditationId}") {
+        fun createRoute(meditationId: String) = "meditation/$meditationId"
     }
 }
 
@@ -82,6 +88,9 @@ fun AppNavigation(
                     },
                     onNavigateToBreathing = {
                         navController.navigate(Screen.BreathingExercises.route)
+                    },
+                    onNavigateToMeditation = {
+                        navController.navigate(Screen.Meditations.route)
                     }
                 )
             }
@@ -107,6 +116,32 @@ fun AppNavigation(
             val exerciseId = backStackEntry.arguments?.getString("exerciseId") ?: return@composable
             BreathingExerciseScreen(
                 exerciseId = exerciseId,
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(Screen.Meditations.route) {
+            MeditationsScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onMeditationSelected = { meditationId ->
+                    navController.navigate(Screen.Meditation.createRoute(meditationId))
+                }
+            )
+        }
+
+        composable(
+            route = Screen.Meditation.route,
+            arguments = listOf(
+                navArgument("meditationId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val meditationId = backStackEntry.arguments?.getString("meditationId") ?: return@composable
+            MeditationScreen(
+                meditationId = meditationId,
                 onNavigateBack = {
                     navController.popBackStack()
                 }

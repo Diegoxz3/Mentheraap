@@ -27,7 +27,8 @@ import com.example.mentheraap.data.User
 fun HomeScreen(
     user: User,
     onLogout: () -> Unit,
-    onNavigateToBreathing: () -> Unit
+    onNavigateToBreathing: () -> Unit,
+    onNavigateToMeditation: () -> Unit
 ) {
     var showLogoutDialog by remember { mutableStateOf(false) }
 
@@ -206,7 +207,9 @@ fun HomeScreen(
                     }
 
                     Card(
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable { onNavigateToMeditation() },
                         colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
                         )
