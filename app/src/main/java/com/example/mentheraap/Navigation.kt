@@ -9,7 +9,10 @@ import androidx.navigation.navArgument
 import com.example.mentheraap.data.User
 import com.example.mentheraap.screens.ui.BreathingExerciseScreen
 import com.example.mentheraap.screens.ui.BreathingExercisesScreen
-import com.example.mentheraap.screens.ui.HomeScreen
+import com.example.mentheraap.screens.ui.CreateJournalEntryScreen
+import com.example.mentherap.screens.ui.HomeScreen
+import com.example.mentheraap.screens.ui.JournalEntryDetailScreen
+import com.example.mentheraap.screens.ui.JournalScreen
 import com.example.mentheraap.screens.ui.LoginScreen
 import com.example.mentheraap.screens.ui.MeditationScreen
 import com.example.mentheraap.screens.ui.MeditationsScreen
@@ -26,6 +29,11 @@ sealed class Screen(val route: String) {
     data object Meditations : Screen("meditations")
     data object Meditation : Screen("meditation/{meditationId}") {
         fun createRoute(meditationId: String) = "meditation/$meditationId"
+    }
+    data object Journal : Screen("journal")
+    data object CreateJournalEntry : Screen("create_journal_entry")
+    data object JournalEntryDetail : Screen("journal_entry/{entryId}") {
+        fun createRoute(entryId: String) = "journal_entry/$entryId"
     }
 }
 
@@ -91,6 +99,9 @@ fun AppNavigation(
                     },
                     onNavigateToMeditation = {
                         navController.navigate(Screen.Meditations.route)
+                    },
+                    onNavigateToJournal = {
+                        navController.navigate(Screen.Journal.route)
                     }
                 )
             }
@@ -146,6 +157,55 @@ fun AppNavigation(
                     navController.popBackStack()
                 }
             )
+        }
+
+        composable(Screen.Journal.route) {
+            currentUser?.let { user ->
+                JournalScreen(
+                    userId = user.id,
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    },
+                    onCreateEntry = {
+                        navController.navigate(Screen.CreateJournalEntry.route)
+                    },
+                    onEntryClick = { entryId ->
+                        navController.navigate(Screen.JournalEntryDetail.createRoute(entryId))
+                    }
+                )
+            }
+        }
+
+        composable(Screen.CreateJournalEntry.route) {
+            currentUser?.let { user ->
+                CreateJournalEntryScreen(
+                    userId = user.id,
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    },
+                    onEntrySaved = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+        }
+
+        composable(
+            route = Screen.JournalEntryDetail.route,
+            arguments = listOf(
+                navArgument("entryId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val entryId = backStackEntry.arguments?.getString("entryId") ?: return@composable
+            currentUser?.let { user ->
+                JournalEntryDetailScreen(
+                    userId = user.id,
+                    entryId = entryId,
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    }
+                )
+            }
         }
     }
 }

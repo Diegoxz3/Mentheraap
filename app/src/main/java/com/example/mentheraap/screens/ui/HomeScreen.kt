@@ -1,4 +1,4 @@
-package com.example.mentheraap.screens.ui
+package com.example.mentherap.screens.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -28,7 +28,8 @@ fun HomeScreen(
     user: User,
     onLogout: () -> Unit,
     onNavigateToBreathing: () -> Unit,
-    onNavigateToMeditation: () -> Unit
+    onNavigateToMeditation: () -> Unit,
+    onNavigateToJournal: () -> Unit
 ) {
     var showLogoutDialog by remember { mutableStateOf(false) }
 
@@ -236,7 +237,9 @@ fun HomeScreen(
                 }
 
                 Card(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onNavigateToJournal() },
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.3f)
                     )
