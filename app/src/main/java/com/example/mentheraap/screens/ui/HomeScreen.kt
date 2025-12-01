@@ -20,7 +20,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.mentheraap.data.Avatars
+import com.example.mentheraap.data.PsychologistRequestManager  // ⬅️ AGREGADO
 import com.example.mentheraap.data.User
+import kotlinx.coroutines.launch  // ⬅️ AGREGADO
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,9 +31,22 @@ fun HomeScreen(
     onLogout: () -> Unit,
     onNavigateToBreathing: () -> Unit,
     onNavigateToMeditation: () -> Unit,
-    onNavigateToJournal: () -> Unit
+    onNavigateToJournal: () -> Unit,
+    onNavigateToContactPsychologist: () -> Unit,  // ⬅️ AGREGADO
+    onNavigateToRecommendations: () -> Unit  // ⬅️ AGREGADO
 ) {
     var showLogoutDialog by remember { mutableStateOf(false) }
+    var unreadCount by remember { mutableStateOf(0) }  // ⬅️ AGREGADO
+
+    val requestManager = remember { PsychologistRequestManager() }  // ⬅️ AGREGADO
+    val coroutineScope = rememberCoroutineScope()  // ⬅️ AGREGADO
+
+    // ⬅️ AGREGADO: Cargar cantidad de recomendaciones no leídas
+    LaunchedEffect(Unit) {
+        coroutineScope.launch {
+            unreadCount = requestManager.getUnreadRecommendationsCount(user.id)
+        }
+    }
 
     val gradient = Brush.verticalGradient(
         colors = listOf(
@@ -77,6 +92,7 @@ fun HomeScreen(
             ) {
                 Spacer(modifier = Modifier.height(16.dp))
 
+                // Card de perfil (sin cambios)
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(20.dp),
@@ -130,6 +146,7 @@ fun HomeScreen(
                     }
                 }
 
+                // Card de bienvenida (sin cambios)
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
@@ -165,8 +182,120 @@ fun HomeScreen(
                     }
                 }
 
+                // ⬅️ NUEVA SECCIÓN: Apoyo Profesional
                 Text(
-                    text = "Próximamente",
+                    text = "Apoyo Profesional",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp),
+                    color = MaterialTheme.colorScheme.primary
+                )
+
+                // ⬅️ NUEVO: Botón Contactar Psicóloga
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onNavigateToContactPsychologist() },
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
+                    ),
+                    shape = RoundedCornerShape(16.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Default.MedicalServices,
+                            contentDescription = null,
+                            modifier = Modifier.size(40.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Contactar Psicóloga",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "Recibe orientación profesional personalizada",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            )
+                        }
+                        Icon(
+                            Icons.Default.ChevronRight,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+
+                // ⬅️ NUEVO: Botón Mis Recomendaciones
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onNavigateToRecommendations() },
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.6f)
+                    ),
+                    shape = RoundedCornerShape(16.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        BadgedBox(
+                            badge = {
+                                if (unreadCount > 0) {
+                                    Badge {
+                                        Text(unreadCount.toString())
+                                    }
+                                }
+                            }
+                        ) {
+                            Icon(
+                                Icons.Default.Chat,
+                                contentDescription = null,
+                                modifier = Modifier.size(40.dp),
+                                tint = MaterialTheme.colorScheme.secondary
+                            )
+                        }
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Mis Recomendaciones",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = if (unreadCount > 0)
+                                    "$unreadCount nueva${if (unreadCount > 1) "s" else ""}"
+                                else
+                                    "Ver respuestas de tu psicóloga",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (unreadCount > 0)
+                                    MaterialTheme.colorScheme.secondary
+                                else
+                                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            )
+                        }
+                        Icon(
+                            Icons.Default.ChevronRight,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.secondary
+                        )
+                    }
+                }
+
+                // Herramientas (texto modificado)
+                Text(
+                    text = "Herramientas de Autocuidado",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier

@@ -6,9 +6,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.mentheraap.data.FirebaseAuthManager
 import com.example.mentheraap.data.User
 import com.example.mentheraap.screens.ui.BreathingExerciseScreen
 import com.example.mentheraap.screens.ui.BreathingExercisesScreen
+import com.example.mentheraap.screens.ui.ContactPsychologistScreen  // ⬅️ AGREGADO
 import com.example.mentheraap.screens.ui.CreateJournalEntryScreen
 import com.example.mentherap.screens.ui.HomeScreen
 import com.example.mentheraap.screens.ui.JournalEntryDetailScreen
@@ -16,6 +18,7 @@ import com.example.mentheraap.screens.ui.JournalScreen
 import com.example.mentheraap.screens.ui.LoginScreen
 import com.example.mentheraap.screens.ui.MeditationScreen
 import com.example.mentheraap.screens.ui.MeditationsScreen
+import com.example.mentheraap.screens.ui.RecommendationsScreen  // ⬅️ AGREGADO
 import com.example.mentheraap.screens.ui.RegisterScreen
 
 sealed class Screen(val route: String) {
@@ -35,6 +38,8 @@ sealed class Screen(val route: String) {
     data object JournalEntryDetail : Screen("journal_entry/{entryId}") {
         fun createRoute(entryId: String) = "journal_entry/$entryId"
     }
+    data object ContactPsychologist : Screen("contact_psychologist")  // ⬅️ AGREGADO
+    data object Recommendations : Screen("recommendations")  // ⬅️ AGREGADO
 }
 
 @Composable
@@ -44,6 +49,7 @@ fun AppNavigation(
     onUserChanged: (User?) -> Unit
 ) {
     val navController = rememberNavController()
+    val authManager = remember { FirebaseAuthManager() }
 
     NavHost(
         navController = navController,
@@ -51,16 +57,8 @@ fun AppNavigation(
     ) {
         composable(Screen.Login.route) {
             LoginScreen(
-                onLoginSuccess = {
-                    val demoUser = User(
-                        id = "1",
-                        username = "demo",
-                        password = "demo123",
-                        isAnonymous = false,
-                        displayName = "Usuario Demo",
-                        avatar = 1
-                    )
-                    onUserChanged(demoUser)
+                onLoginSuccess = { user ->
+                    onUserChanged(user)
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
@@ -73,8 +71,9 @@ fun AppNavigation(
 
         composable(Screen.Register.route) {
             RegisterScreen(
-                onRegisterSuccess = {
-                    navController.navigate(Screen.Login.route) {
+                onRegisterSuccess = { user ->
+                    onUserChanged(user)
+                    navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Register.route) { inclusive = true }
                     }
                 },
@@ -89,6 +88,7 @@ fun AppNavigation(
                 HomeScreen(
                     user = user,
                     onLogout = {
+                        authManager.logout()
                         onUserChanged(null)
                         navController.navigate(Screen.Login.route) {
                             popUpTo(0) { inclusive = true }
@@ -102,6 +102,47 @@ fun AppNavigation(
                     },
                     onNavigateToJournal = {
                         navController.navigate(Screen.Journal.route)
+                    },
+                    onNavigateToContactPsychologist = {  // ⬅️ AGREGADO
+                        navController.navigate(Screen.ContactPsychologist.route)
+                    },
+                    onNavigateToRecommendations = {  // ⬅️ AGREGADO
+                        navController.navigate(Screen.Recommendations.route)
+                    }
+                )
+            }
+        }
+
+        // ⬅️ NUEVA RUTA: Contactar Psicóloga
+        composable(Screen.ContactPsychologist.route) {
+            currentUser?.let { user ->
+                ContactPsychologistScreen(
+                    user = user,
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    },
+                    onRequestSent = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+        }
+
+        // ⬅️ NUEVA RUTA: Ver Recomendaciones
+        composable(Screen.Recommendations.route) {
+            currentUser?.let { user ->
+                RecommendationsScreen(
+                    user = user,
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    },
+                    onNavigateToExercise = { exerciseId ->
+                        // Determinar si es respiración o meditación
+                        if (exerciseId.startsWith("breathing_")) {
+                            navController.navigate(Screen.BreathingExercise.createRoute(exerciseId))
+                        } else if (exerciseId.startsWith("meditation_")) {
+                            navController.navigate(Screen.Meditation.createRoute(exerciseId))
+                        }
                     }
                 )
             }

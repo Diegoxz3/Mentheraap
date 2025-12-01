@@ -16,11 +16,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import com.example.mentheraap.data.FirebaseAuthManager
+import com.example.mentheraap.data.User
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
-    onLoginSuccess: () -> Unit,
+    onLoginSuccess: (User) -> Unit,  // ⬅️ MODIFICADO: recibe User
     onNavigateToRegister: () -> Unit
 ) {
     var username by remember { mutableStateOf("") }
@@ -28,6 +31,55 @@ fun LoginScreen(
     var showPassword by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
+
+    val authManager = remember { FirebaseAuthManager() }  // ⬅️ AGREGADO
+    val coroutineScope = rememberCoroutineScope()  // ⬅️ AGREGADO
+
+    // ⬅️ NUEVA FUNCIÓN DE LOGIN
+    fun validateAndLogin() {
+        errorMessage = ""
+
+        when {
+            username.isBlank() -> {
+                errorMessage = "Por favor ingresa tu nombre de usuario"
+            }
+            password.isBlank() -> {
+                errorMessage = "Por favor ingresa tu contraseña"
+            }
+            else -> {
+                isLoading = true
+                coroutineScope.launch {
+                    try {
+                        // Crear email ficticio (username@mentheraap.com)
+                        val email = "$username@mentheraap.com"
+
+                        // Intentar login
+                        val result = authManager.loginUser(email, password)
+
+                        result.onSuccess { user ->
+                            isLoading = false
+                            onLoginSuccess(user)
+                        }.onFailure { error ->
+                            isLoading = false
+                            errorMessage = when {
+                                error.message?.contains("network", ignoreCase = true) == true ->
+                                    "Error de conexión. Verifica tu internet"
+                                error.message?.contains("password", ignoreCase = true) == true ||
+                                        error.message?.contains("user", ignoreCase = true) == true ||
+                                        error.message?.contains("INVALID", ignoreCase = true) == true ->
+                                    "Usuario o contraseña incorrectos"
+                                else ->
+                                    "Error al iniciar sesión. Verifica tus credenciales"
+                            }
+                        }
+                    } catch (e: Exception) {
+                        isLoading = false
+                        errorMessage = "Error inesperado: ${e.message}"
+                    }
+                }
+            }
+        }
+    }
 
     // Gradiente relajante para el fondo
     val gradient = Brush.verticalGradient(
@@ -159,22 +211,7 @@ fun LoginScreen(
 
                     // Botón de inicio de sesión
                     Button(
-                        onClick = {
-                            // Validaciones
-                            when {
-                                username.isBlank() -> {
-                                    errorMessage = "Por favor ingresa tu nombre de usuario"
-                                }
-                                password.isBlank() -> {
-                                    errorMessage = "Por favor ingresa tu contraseña"
-                                }
-                                else -> {
-                                    isLoading = true
-                                    // TODO: Implementar login real
-                                    onLoginSuccess()
-                                }
-                            }
-                        },
+                        onClick = { validateAndLogin() },  // ⬅️ MODIFICADO
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp),
@@ -184,7 +221,8 @@ fun LoginScreen(
                         if (isLoading) {
                             CircularProgressIndicator(
                                 modifier = Modifier.size(24.dp),
-                                color = MaterialTheme.colorScheme.onPrimary
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                strokeWidth = 2.dp  // ⬅️ AGREGADO para mejor visual
                             )
                         } else {
                             Icon(Icons.Default.Login, contentDescription = null)
@@ -193,7 +231,7 @@ fun LoginScreen(
                         }
                     }
 
-                    Divider(modifier = Modifier.padding(vertical = 8.dp))
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))  // ⬅️ CAMBIADO de Divider
 
                     // Botón para ir a registro
                     OutlinedButton(

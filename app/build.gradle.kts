@@ -3,6 +3,7 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
     id("org.jetbrains.kotlin.plugin.serialization") version "2.0.21"
+    id("com.google.gms.google-services") // ⬅️ AGREGAR ESTA LÍNEA
 }
 
 android {
@@ -98,4 +99,19 @@ dependencies {
 
     // Accompanist FlowRow para chips que se ajustan
     implementation("com.google.accompanist:accompanist-flowlayout:0.30.1")
+    // Firebase BOM (Bill of Materials) - gestiona versiones automáticamente
+    implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
+
+
+
+
+
+    // Firebase Authentication
+    implementation("com.google.firebase:firebase-auth-ktx")
+
+    // Firestore Database
+    implementation("com.google.firebase:firebase-firestore-ktx")
+
+    // Firebase Analytics (opcional)
+    implementation("com.google.firebase:firebase-analytics-ktx")
 }

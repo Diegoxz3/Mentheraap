@@ -19,11 +19,15 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.mentheraap.data.Avatars
+import com.example.mentheraap.data.FirebaseAuthManager
+import com.example.mentheraap.data.User
+import kotlinx.coroutines.launch
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterScreen(
-    onRegisterSuccess: () -> Unit,
+    onRegisterSuccess: (User) -> Unit,  // ⬅️ MODIFICADO: recibe User
     onNavigateToLogin: () -> Unit
 ) {
     var username by remember { mutableStateOf("") }
@@ -36,12 +40,76 @@ fun RegisterScreen(
     var errorMessage by remember { mutableStateOf("") }
     var showAvatarPicker by remember { mutableStateOf(false) }
 
+    val authManager = remember { FirebaseAuthManager() }
+    val coroutineScope = rememberCoroutineScope()
+    var isLoading by remember { mutableStateOf(false) }
+
     val gradient = Brush.verticalGradient(
         colors = listOf(
             MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
             MaterialTheme.colorScheme.surface
         )
     )
+
+    // ⬅️ NUEVA FUNCIÓN DE VALIDACIÓN Y REGISTRO
+    fun validateAndRegister() {
+        errorMessage = ""
+
+        when {
+            username.isBlank() -> errorMessage = "El nombre de usuario es requerido"
+            username.length < 3 -> errorMessage = "El usuario debe tener al menos 3 caracteres"
+            password.isBlank() -> errorMessage = "La contraseña es requerida"
+            password.length < 6 -> errorMessage = "La contraseña debe tener al menos 6 caracteres"
+            password != confirmPassword -> errorMessage = "Las contraseñas no coinciden"
+            !isAnonymous && displayName.isBlank() -> errorMessage = "Por favor ingresa tu nombre"
+            else -> {
+                // Registrar con Firebase
+                isLoading = true
+                coroutineScope.launch {
+                    try {
+                        // Verificar si el username ya existe
+                        val exists = authManager.usernameExists(username)
+                        if (exists) {
+                            errorMessage = "Este nombre de usuario ya está en uso"
+                            isLoading = false
+                            return@launch
+                        }
+
+                        // Crear email ficticio (username@mentheraap.com)
+                        val email = "$username@mentheraap.com"
+
+                        // Registrar usuario
+                        val result = authManager.registerUser(
+                            email = email,
+                            password = password,
+                            username = username,
+                            isAnonymous = isAnonymous,
+                            displayName = if (isAnonymous) "Anónimo" else displayName,
+                            avatar = selectedAvatar
+                        )
+
+                        result.onSuccess { user ->
+                            isLoading = false
+                            onRegisterSuccess(user)
+                        }.onFailure { error ->
+                            isLoading = false
+                            errorMessage = when {
+                                error.message?.contains("network", ignoreCase = true) == true ->
+                                    "Error de conexión. Verifica tu internet"
+                                error.message?.contains("email", ignoreCase = true) == true ->
+                                    "Error con el correo electrónico"
+                                else ->
+                                    "Error al registrar: ${error.message}"
+                            }
+                        }
+                    } catch (e: Exception) {
+                        isLoading = false
+                        errorMessage = "Error inesperado: ${e.message}"
+                    }
+                }
+            }
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -98,7 +166,8 @@ fun RegisterScreen(
                         label = { Text("Nombre de usuario") },
                         leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
                         modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
+                        singleLine = true,
+                        enabled = !isLoading  // ⬅️ AGREGADO
                     )
 
                     OutlinedTextField(
@@ -119,7 +188,8 @@ fun RegisterScreen(
                         },
                         visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
                         modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
+                        singleLine = true,
+                        enabled = !isLoading  // ⬅️ AGREGADO
                     )
 
                     OutlinedTextField(
@@ -132,7 +202,8 @@ fun RegisterScreen(
                         leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
                         visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
                         modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
+                        singleLine = true,
+                        enabled = !isLoading  // ⬅️ AGREGADO
                     )
 
                     HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
@@ -141,7 +212,7 @@ fun RegisterScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(8.dp))
-                            .clickable { isAnonymous = !isAnonymous }
+                            .clickable(enabled = !isLoading) { isAnonymous = !isAnonymous }  // ⬅️ MODIFICADO
                             .padding(8.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
@@ -159,7 +230,8 @@ fun RegisterScreen(
                         }
                         Switch(
                             checked = isAnonymous,
-                            onCheckedChange = { isAnonymous = it }
+                            onCheckedChange = { isAnonymous = it },
+                            enabled = !isLoading  // ⬅️ AGREGADO
                         )
                     }
 
@@ -176,7 +248,7 @@ fun RegisterScreen(
                             OutlinedCard(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable { showAvatarPicker = true },
+                                    .clickable(enabled = !isLoading) { showAvatarPicker = true },  // ⬅️ MODIFICADO
                                 colors = CardDefaults.outlinedCardColors(
                                     containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
                                 )
@@ -216,7 +288,8 @@ fun RegisterScreen(
                             leadingIcon = { Icon(Icons.Default.Badge, contentDescription = null) },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
-                            placeholder = { Text("¿Cómo te llamas?") }
+                            placeholder = { Text("¿Cómo te llamas?") },
+                            enabled = !isLoading  // ⬅️ AGREGADO
                         )
                     }
 
@@ -230,32 +303,30 @@ fun RegisterScreen(
                     }
 
                     Button(
-                        onClick = {
-                            when {
-                                username.isBlank() -> errorMessage = "El nombre de usuario es requerido"
-                                username.length < 3 -> errorMessage = "El usuario debe tener al menos 3 caracteres"
-                                password.isBlank() -> errorMessage = "La contraseña es requerida"
-                                password.length < 6 -> errorMessage = "La contraseña debe tener al menos 6 caracteres"
-                                password != confirmPassword -> errorMessage = "Las contraseñas no coinciden"
-                                !isAnonymous && displayName.isBlank() -> errorMessage = "Por favor ingresa tu nombre"
-                                else -> {
-                                    onRegisterSuccess()
-                                }
-                            }
-                        },
+                        onClick = { validateAndRegister() },  // ⬅️ MODIFICADO
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(12.dp),
+                        enabled = !isLoading  // ⬅️ AGREGADO
                     ) {
-                        Icon(Icons.Default.PersonAdd, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Crear cuenta", style = MaterialTheme.typography.bodyLarge)
+                        if (isLoading) {  // ⬅️ AGREGADO
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Icon(Icons.Default.PersonAdd, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Crear cuenta", style = MaterialTheme.typography.bodyLarge)
+                        }
                     }
 
                     TextButton(
                         onClick = onNavigateToLogin,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !isLoading  // ⬅️ AGREGADO
                     ) {
                         Text("¿Ya tienes cuenta? Inicia sesión")
                     }

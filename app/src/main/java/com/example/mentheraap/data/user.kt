@@ -1,5 +1,7 @@
 package com.example.mentheraap.data
 
+import com.google.firebase.firestore.PropertyName  // ⬅️ AGREGAR ESTA LÍNEA AL INICIO
+
 /**
  * Representa un usuario de la app Mentheraap
  *
@@ -11,13 +13,16 @@ package com.example.mentheraap.data
  * @param avatar Identificador del avatar elegido (1-8)
  */
 data class User(
-    val id: String,
-    val username: String,
-    val password: String,
-    val isAnonymous: Boolean,
-    val displayName: String,
-    val avatar: Int = 1 // Avatar por defecto
-)
+    @PropertyName("id") val id: String = "",              // ⬅️ AGREGAR @PropertyName y = ""
+    @PropertyName("username") val username: String = "",   // ⬅️ AGREGAR @PropertyName y = ""
+    @PropertyName("password") val password: String = "",   // ⬅️ AGREGAR @PropertyName y = ""
+    @PropertyName("isAnonymous") val isAnonymous: Boolean = false,  // ⬅️ AGREGAR @PropertyName y = false
+    @PropertyName("displayName") val displayName: String = "",      // ⬅️ AGREGAR @PropertyName y = ""
+    @PropertyName("avatar") val avatar: Int = 1           // ⬅️ SOLO agregar @PropertyName (ya tiene = 1)
+) {
+    // ⬅️ AGREGAR ESTE CONSTRUCTOR SIN ARGUMENTOS (Requerido por Firestore)
+    constructor() : this("", "", "", false, "", 1)
+}
 
 /**
  * Lista de avatares disponibles con sus emojis
