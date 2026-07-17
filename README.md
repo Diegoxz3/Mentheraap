@@ -43,15 +43,6 @@ The application aims to provide accessible self-care tools that encourage health
 
 ---
 
-## 📸 Screenshots
-
-> *(Add screenshots here)*
-
-| Home | Breathing | Journal |
-|------|-----------|----------|
-| Image | Image | Image |
-
----
 
 ## 🏛️ Architecture
 
@@ -151,6 +142,6 @@ Electronics & Telecommunications Engineering Student
 
 Aspiring Network Automation & SDN Engineer
 
-📧 LinkedIn: *(Add your LinkedIn)*
+📧 LinkedIn: *https://www.linkedin.com/in/diegorualesguerrero/*
 
 🌐 GitHub: https://github.com/Diegoxz3
